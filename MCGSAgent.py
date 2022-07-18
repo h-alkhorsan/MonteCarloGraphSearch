@@ -45,10 +45,8 @@ class MCGSAgent(stratega.Agent):
         self.timer = Timer()
         self.max_time_ms = 1000
 
-        #self.heuristic = MinimizeDistanceHeuristic()
-        #self.heuristic = RelativeStrengthHeuristic(gs)
         self.heuristic = GeneralHeuristic(gs)
-        #self.budget_type = config['budget_type']
+
 
     def is_budget_over(self):
         if self.budget_type == "MAX_FM_CALLS":
@@ -85,7 +83,6 @@ class MCGSAgent(stratega.Agent):
         possible_actions = forward_model.generate_actions(gs, self.get_player_id())
        
         if len(possible_actions) == 1:
-            #print("only one action available")
             return stratega.ActionAssignment.from_single_action(possible_actions[0])
 
         action = self.plan(gs, forward_model)
@@ -140,9 +137,7 @@ class MCGSAgent(stratega.Agent):
         return selected_node
 
     def go_to_node(self, destination_node, env, forward_model): 
-        
-        # temp_env = deepcopy(env)
-        # observation = self.get_observation(temp_env)
+
 
         observation = self.get_observation(env)
         node = self.graph.get_node_info(observation)
@@ -155,7 +150,6 @@ class MCGSAgent(stratega.Agent):
 
             for idx, action in enumerate(actions):
 
-                # temp_env = deepcopy(env)
                 previous_observation = self.get_observation(env)
                 parent_node = self.graph.get_node_info(previous_observation)
                 
@@ -173,7 +167,6 @@ class MCGSAgent(stratega.Agent):
 
                 if observations[idx + 1] != current_observation:
                     node = self.graph.get_node_info(current_observation)
-                    print("early break")
                     break
               
                 if self.get_observation(env) == destination_node.id:
@@ -248,14 +241,12 @@ class MCGSAgent(stratega.Agent):
             reward = self.evaluate_state(forward_model, rollout_env, self.get_player_id())
             cum_reward += reward 
 
-            # random opponent model
             if self.use_opponent_model:
                 rollout_env.set_current_tbs_player(self.get_opponent_id())
 
                 opponent_actions = forward_model.generate_actions(rollout_env, self.get_opponent_id())
                 random_opponent_action = self.random.choice(opponent_actions)
                 forward_model.advance_gamestate(rollout_env, random_opponent_action)
-                #self.forward_model_calls += 1
 
                 rollout_env.set_current_tbs_player(self.get_player_id())
        
@@ -267,14 +258,9 @@ class MCGSAgent(stratega.Agent):
             node.total_value += reward 
             node = node.parent
 
-    ###### CHECK THIS ###########
     def set_root_node(self, gs):
         old_root_node = self.root_node
         new_root_id = self.get_observation(gs)
-        
-        # if not self.graph.has_node(new_root_id):
-        #     self.root_node = Node(id = self.get_observation(gs), parent=None, is_leaf=True, action=None, reward=0, visits=0)
-        #     self.add_node(self.root_node)
 
         self.root_node = self.graph.get_node_info(new_root_id)
         self.graph.set_root_node(self.root_node)
